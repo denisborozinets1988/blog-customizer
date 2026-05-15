@@ -31,6 +31,7 @@ export const ArticleParamsForm = () => {
 						<Separator />
 						{/* <Select /> */}
 						{/* <Select /> */}
+						{/* <Select /> */}
 						<Button title='Сбросить' htmlType='reset' type='clear' />
 						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
