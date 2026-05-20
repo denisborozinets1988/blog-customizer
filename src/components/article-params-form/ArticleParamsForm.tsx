@@ -88,6 +88,7 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 					onReset={() => {
 						selectedArticleState.current = { ...defaultArticleState };
 						props.onReset();
+						setChanged({});
 					}}>
 					<Text as='h2' size={31} weight={800} uppercase>
 						задайте параметры
