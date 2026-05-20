@@ -83,7 +83,7 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 					className={clsx(styles.form, styles.gap)}
 					onSubmit={(e) => {
 						e.preventDefault();
-						props.onApply(selectedArticleState.current);
+						props.onApply({ ...selectedArticleState.current });
 					}}
 					onReset={() => {
 						selectedArticleState.current = { ...defaultArticleState };
