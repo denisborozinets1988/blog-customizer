@@ -4,150 +4,143 @@ import { Button } from 'src/ui/button';
 import styles from './ArticleParamsForm.module.scss';
 import { Select } from 'src/ui/select';
 import {
+	ArticleStateType,
 	backgroundColors,
 	contentWidthArr,
 	defaultArticleState,
 	fontColors,
 	fontFamilyOptions,
 	fontSizeOptions,
-	OptionType,
 } from 'src/constants/articleProps';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
+import clsx from 'clsx';
 
 type ArticleParamsFormProps = {
-	isOpen: boolean;
-	setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	fontFamilyRef: React.MutableRefObject<OptionType>;
-	fontSizeRef: React.MutableRefObject<OptionType>;
-	fontColorRef: React.MutableRefObject<OptionType>;
-	backgroundColorRef: React.MutableRefObject<OptionType>;
-	contentWidthRef: React.MutableRefObject<OptionType>;
-	Apply: (
-		fontFamily: OptionType,
-		fontSize: OptionType,
-		fontColor: OptionType,
-		backgroundColor: OptionType,
-		contentWidth: OptionType
-	) => void;
-	Reset: () => void;
+	onApply: (articleState: ArticleStateType) => void;
+	onReset: () => void;
 };
 
 export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
-	const [selectedFontFamily, setSelectedFontFamily] = useState(
-		props.fontFamilyRef.current
-	);
-	const [selectedFontSize, setSelectedFontSize] = useState(
-		props.fontSizeRef.current
-	);
-	const [selectedFontColor, setSelectedFontColor] = useState(
-		props.fontColorRef.current
-	);
-	const [selectedBackgroundColor, setSelectedBackgroundColor] = useState(
-		props.backgroundColorRef.current
-	);
-	const [selectedContentWidth, setSelectedContentWidth] = useState(
-		props.contentWidthRef.current
-	);
-	const asideClassName: any[] = [styles.container];
-	if (props.isOpen) {
-		asideClassName.push(styles.container_open);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [, setChanged] = useState({});
+	const selectedArticleState = useRef<ArticleStateType>({
+		...defaultArticleState,
+	});
+
+	let asideClassName = clsx(styles.container);
+	if (isOpen) {
+		asideClassName = clsx(styles.container, styles.container_open);
 	}
 
-	/* Сброс неприменённых настроек на текущие при закрытии. */
 	useEffect(() => {
-		if (!props.isOpen) {
-			setSelectedFontFamily(props.fontFamilyRef.current);
-			setSelectedFontSize(props.fontSizeRef.current);
-			setSelectedFontColor(props.fontColorRef.current);
-			setSelectedBackgroundColor(props.backgroundColorRef.current);
-			setSelectedContentWidth(props.contentWidthRef.current);
+		if (!isOpen) {
+			return;
 		}
-	}, [props.isOpen]);
+
+		const handleClick = (event: MouseEvent) => {
+			const target = event.target as HTMLElement;
+			const isButton =
+				target.getAttribute('role') === 'button' ||
+				target.parentElement?.getAttribute('role') === 'button';
+
+			if (
+				isOpen &&
+				!isButton &&
+				!document.getElementsByTagName('aside')[0].contains(target)
+			) {
+				setIsOpen(false);
+			}
+		};
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') {
+				setIsOpen(false);
+			}
+		};
+
+		window.addEventListener('mousedown', handleClick);
+		window.addEventListener('keydown', handleKeyDown);
+
+		return () => {
+			window.removeEventListener('mousedown', handleClick);
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [isOpen]);
 
 	return (
 		<>
 			<ArrowButton
-				isOpen={props.isOpen}
+				isOpen={isOpen}
 				onClick={() => {
-					props.setIsOpen(!props.isOpen);
+					setIsOpen(!isOpen);
 				}}
 			/>
-			<aside className={asideClassName.join(' ')}>
+			<aside className={asideClassName}>
 				<form
-					style={{ gap: 50 }}
-					className={styles.form}
+					className={clsx(styles.form, styles.gap)}
 					onSubmit={(e) => {
 						e.preventDefault();
-						props.Apply(
-							selectedFontFamily,
-							selectedFontSize,
-							selectedFontColor,
-							selectedBackgroundColor,
-							selectedContentWidth
-						);
+						props.onApply(selectedArticleState.current);
+					}}
+					onReset={() => {
+						selectedArticleState.current = { ...defaultArticleState };
+						props.onReset();
 					}}>
 					<Text as='h2' size={31} weight={800} uppercase>
 						задайте параметры
 					</Text>
 					<Select
-						selected={selectedFontFamily}
+						selected={selectedArticleState.current.fontFamilyOption}
 						options={fontFamilyOptions}
 						title='шрифт'
 						onChange={(selectedElement) => {
-							setSelectedFontFamily(selectedElement);
+							selectedArticleState.current.fontFamilyOption = selectedElement;
+							setChanged({});
 						}}
 					/>
 					<RadioGroup
 						name='размер шрифта'
 						options={fontSizeOptions}
-						selected={selectedFontSize}
+						selected={selectedArticleState.current.fontSizeOption}
 						onChange={(selectedElement) => {
-							setSelectedFontSize(selectedElement);
+							selectedArticleState.current.fontSizeOption = selectedElement;
+							setChanged({});
 						}}
 						title='размер шрифта'
 					/>
 					<Select
-						selected={selectedFontColor}
+						selected={selectedArticleState.current.fontColor}
 						options={fontColors}
 						title='цвет шрифта'
 						onChange={(selectedElement) => {
-							setSelectedFontColor(selectedElement);
+							selectedArticleState.current.fontColor = selectedElement;
+							setChanged({});
 						}}
 					/>
 					<Separator />
 					<Select
-						selected={selectedBackgroundColor}
+						selected={selectedArticleState.current.backgroundColor}
 						options={backgroundColors}
 						title='цвет фона'
 						onChange={(selectedElement) => {
-							setSelectedBackgroundColor(selectedElement);
+							selectedArticleState.current.backgroundColor = selectedElement;
+							setChanged({});
 						}}
 					/>
 					<Select
-						selected={selectedContentWidth}
+						selected={selectedArticleState.current.contentWidth}
 						options={contentWidthArr}
 						title='ширина контента'
 						onChange={(selectedElement) => {
-							setSelectedContentWidth(selectedElement);
+							selectedArticleState.current.contentWidth = selectedElement;
+							setChanged({});
 						}}
 					/>
 					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							htmlType='reset'
-							type='clear'
-							onClick={() => {
-								setSelectedFontFamily(defaultArticleState.fontFamilyOption);
-								setSelectedFontSize(defaultArticleState.fontSizeOption);
-								setSelectedFontColor(defaultArticleState.fontColor);
-								setSelectedBackgroundColor(defaultArticleState.backgroundColor);
-								setSelectedContentWidth(defaultArticleState.contentWidth);
-								props.Reset();
-							}}
-						/>
+						<Button title='Сбросить' htmlType='reset' type='clear' />
 						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
